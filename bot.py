@@ -11,10 +11,13 @@ from telegram.ext import (
     MessageHandler,
     CallbackQueryHandler,
     filters
-)
+)import os
+
+BOT_TOKEN = os.getenv("BOT_TOKEN")
+if not BOT_TOKEN:
+    raise ValueError("BOT_TOKEN is not set")
 
 # ================== تنظیمات ==================
-BOT_TOKEN = "توکن ربات"
 ADMIN_ID = 5046852230  # آیدی عددی شما
 # ============================================
 
@@ -138,3 +141,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
