@@ -11,7 +11,8 @@ from telegram.ext import (
     MessageHandler,
     CallbackQueryHandler,
     filters
-)import os
+)
+import os
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 if not BOT_TOKEN:
@@ -141,4 +142,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
