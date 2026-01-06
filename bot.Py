@@ -50,6 +50,11 @@ async def user_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     user = update.effective_user
+
+    # ❌ اگر خود ادمین است، این تابع اجرا نشود
+    if user.id == ADMIN_ID:
+        return
+
     if user.id in blocked_users:
         return
 
@@ -70,17 +75,13 @@ async def user_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"💬 متن پیام:\n{text}"
     )
 
-    try:
-        await context.bot.send_message(
-            chat_id=ADMIN_ID,
-            text=msg,
-            reply_markup=keyboard
-        )
-        await update.message.reply_text("✅ پیامت ارسال شد.")
-    except Exception as e:
-        print("ERROR sending to admin:", e)
-        await update.message.reply_text("❌ خطا در ارسال پیام.")
+    await context.bot.send_message(
+        chat_id=ADMIN_ID,
+        text=msg,
+        reply_markup=keyboard
+    )
 
+    await update.message.reply_text("✅ پیامت ارسال شد.")
 # ================== دکمه‌های ادمین ==================
 
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -109,23 +110,15 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # ================== پاسخ ادمین ==================
 
-async def admin_reply(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if update.message is None:
-        return
+app.add_handler(CommandHandler("start", start))
 
-    if update.effective_user.id != ADMIN_ID:
-        return
+# 👈 اول پاسخ ادمین
+app.add_handler(MessageHandler(filters.REPLY, admin_reply))
 
-    if ADMIN_ID not in pending_replies:
-        return
+# 👈 بعد پیام کاربران
+app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, user_message))
 
-    user_id = pending_replies.pop(ADMIN_ID)
-    text = update.message.text
-
-    try:
-        await context.bot.send_message(
-            chat_id=user_id,
-            text=f"📨 پاسخ ادمین:\n\n{text}"
+app.add_handler(CallbackQueryHandler(button_handler))
         )
         await update.message.reply_text("✅ پاسخ ارسال شد.")
     except Exception as e:
