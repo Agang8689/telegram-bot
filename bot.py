@@ -14,8 +14,8 @@ from telegram.ext import (
 )
 
 # ================== تنظیمات ==================
-BOT_TOKEN = "توکن ربات"
-ADMIN_ID = 5046852230  # آیدی عددی شما
+BOT_TOKEN = "8410161515:AAG_hS_8hxV9WmXWfUoLRfB_MhU4bssBr5o"
+ADMIN_ID = 8044612620  # آیدی عددی شما
 # ============================================
 
 blocked_users = set()
@@ -138,3 +138,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
