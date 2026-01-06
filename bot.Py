@@ -20,7 +20,7 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 if not BOT_TOKEN:
     raise ValueError("BOT_TOKEN is not set")
 
-# آی‌دی عددی ادمین (با @userinfobot بگیر)
+# آی‌دی عددی ادمین (حتماً با @userinfobot بگیر)
 ADMIN_ID = 8044612620  # ← اینو عوض کن
 
 # ================== متغیرها ==================
@@ -34,16 +34,16 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.message is None:
         return
 
-    user = update.effective_user
-    if user.id in blocked_users:
+    if update.effective_user.id in blocked_users:
         return
 
     await update.message.reply_text(
         "سلام ❤️\n"
-        "پیامت رو بفرست تا به صورت ناشناس برای ادمین ارسال بشه."
+        "پیامت به صورت «ناشناس» برای ادمین ارسال می‌شه.\n"
+        "پیامت رو اینجا بنویس و منتظر پاسخ باش 🤝"
     )
 
-# ================== پیام کاربر ==================
+# ================== پیام کاربران ==================
 
 async def user_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.message is None:
@@ -51,7 +51,7 @@ async def user_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     user = update.effective_user
 
-    # ❌ اگر خود ادمین است، این تابع اجرا نشود
+    # پیام‌های خود ادمین اینجا پردازش نشه
     if user.id == ADMIN_ID:
         return
 
@@ -59,7 +59,7 @@ async def user_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     text = update.message.text
-    username = user.username or "NoUsername"
+    username = user.username or "ندارد"
 
     keyboard = InlineKeyboardMarkup([
         [
@@ -68,20 +68,25 @@ async def user_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ]
     ])
 
-    msg = (
-        "📩 پیام جدید\n\n"
-        f"👤 یوزرنیم: @{username}\n"
-        f"🆔 آیدی: {user.id}\n\n"
+    # 👮 پیام کامل برای ادمین
+    admin_message = (
+        "📩 پیام ناشناس جدید\n\n"
+        f"🆔 آیدی عددی: {user.id}\n"
+        f"👤 یوزرنیم: @{username}\n\n"
         f"💬 متن پیام:\n{text}"
     )
 
-    await context.bot.send_message(
-        chat_id=ADMIN_ID,
-        text=msg,
-        reply_markup=keyboard
-    )
+    try:
+        await context.bot.send_message(
+            chat_id=ADMIN_ID,
+            text=admin_message,
+            reply_markup=keyboard
+        )
+        await update.message.reply_text("✅ پیامت ارسال شد.")
+    except Exception as e:
+        print("ERROR sending to admin:", e)
+        await update.message.reply_text("❌ خطا در ارسال پیام.")
 
-    await update.message.reply_text("✅ پیامت ارسال شد.")
 # ================== دکمه‌های ادمین ==================
 
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -110,15 +115,23 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # ================== پاسخ ادمین ==================
 
-app.add_handler(CommandHandler("start", start))
+async def admin_reply(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.message is None:
+        return
 
-# 👈 اول پاسخ ادمین
-app.add_handler(MessageHandler(filters.REPLY, admin_reply))
+    if update.effective_user.id != ADMIN_ID:
+        return
 
-# 👈 بعد پیام کاربران
-app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, user_message))
+    if ADMIN_ID not in pending_replies:
+        return
 
-app.add_handler(CallbackQueryHandler(button_handler))
+    user_id = pending_replies.pop(ADMIN_ID)
+    text = update.message.text
+
+    try:
+        await context.bot.send_message(
+            chat_id=user_id,
+            text=f"📨 پاسخ ادمین:\n\n{text}"
         )
         await update.message.reply_text("✅ پاسخ ارسال شد.")
     except Exception as e:
@@ -131,9 +144,14 @@ def main():
     app = ApplicationBuilder().token(BOT_TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, user_message))
-    app.add_handler(CallbackQueryHandler(button_handler))
+
+    # 👈 خیلی مهم: اول reply ادمین
     app.add_handler(MessageHandler(filters.REPLY, admin_reply))
+
+    # 👈 بعد پیام کاربران
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, user_message))
+
+    app.add_handler(CallbackQueryHandler(button_handler))
 
     print("Bot is running...")
     app.run_polling()
