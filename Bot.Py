@@ -21,7 +21,7 @@ if not BOT_TOKEN:
     raise ValueError("BOT_TOKEN is not set")
 
 # آی‌دی عددی ادمین (با @userinfobot بگیر)
-ADMIN_ID = 7412750501  # ← اینو عوض کن
+ADMIN_ID = 8044612620  # ← اینو عوض کن
 
 # ================== متغیرها ==================
 
